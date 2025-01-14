@@ -26,48 +26,29 @@ main :: proc() {
         mem.tracking_allocator_destroy(&track)
     }
 
-    window, renderer, color_buffer, color_buffer_texture, is_running := startup(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_FLAGS, RENDER_FLAGS)
-    if !is_running {
-        fmt.eprintln("Error during startup.")
-        return
-    }
-    defer shutdown(renderer, window, color_buffer, color_buffer_texture)
-
-    for is_running {
-        is_running = process_input()
-        update()
-        render(renderer, color_buffer, color_buffer_texture, WINDOW_WIDTH, WINDOW_HEIGHT)
-
-        // Free all memory allocated this frame.
-        mem.free_all(context.temp_allocator)
-    }
-}
-
-startup :: proc(title: cstring, $width, $height: i32, window_flags: sdl.WindowFlags, render_flags: sdl.RendererFlags, allocator := context.allocator) -> (^sdl.Window, ^sdl.Renderer, []u32, ^sdl.Texture, bool) {
     if sdl.Init(sdl.INIT_EVERYTHING) != 0 {
         fmt.eprintln("Error initializing SDL.")
-        return nil, nil, nil, nil, false
     }
 
-    window := sdl.CreateWindow(title, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, width, height, window_flags)
+    window := sdl.CreateWindow(WINDOW_TITLE, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_FLAGS)
     if window == nil {
         fmt.eprintln("Error initializing SDL window.")
-        return nil, nil, nil, nil, false
+        return
     }
 
-    renderer := sdl.CreateRenderer(window, -1, render_flags)
+    renderer := sdl.CreateRenderer(window, -1, RENDER_FLAGS)
     if renderer == nil {
         fmt.eprintln("Error initializing SDL renderer.")
         sdl.DestroyWindow(window)
-        return nil, nil, nil, nil, false
+        return
     }
 
-    color_buffer := make([]u32, size_of(u32) * width * height, allocator)
+    color_buffer := make([]u32, size_of(u32) * WINDOW_WIDTH * WINDOW_HEIGHT)
     if color_buffer == nil {
         fmt.eprintln("Error allocating color buffer.")
         sdl.DestroyRenderer(renderer)
         sdl.DestroyWindow(window)
-        return nil, nil, nil, nil, false
+        return
     }
 
     color_buffer_texture := sdl.CreateTexture(renderer, .ARGB8888, .STREAMING, WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -76,10 +57,19 @@ startup :: proc(title: cstring, $width, $height: i32, window_flags: sdl.WindowFl
         delete(color_buffer)
         sdl.DestroyRenderer(renderer)
         sdl.DestroyWindow(window)
-        return nil, nil, nil, nil, false
+        return
     }
+    defer shutdown(renderer, window, color_buffer, color_buffer_texture)
 
-    return window, renderer, color_buffer, color_buffer_texture, true
+    is_running := true
+    for is_running {
+        is_running = process_input()
+        update()
+        render(renderer, color_buffer, color_buffer_texture, WINDOW_WIDTH, WINDOW_HEIGHT)
+
+        // Free all memory allocated this frame.
+        mem.free_all(context.temp_allocator)
+    }
 }
 
 shutdown :: proc(renderer: ^sdl.Renderer, window: ^sdl.Window, color_buffer: []u32, color_buffer_texture: ^sdl.Texture) {
