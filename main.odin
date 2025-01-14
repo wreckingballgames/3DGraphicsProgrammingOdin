@@ -27,6 +27,10 @@ main :: proc() {
     }
 
     window, renderer, color_buffer, is_running := startup(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_FLAGS, RENDER_FLAGS)
+    if !is_running {
+        fmt.eprintln("Error during startup.")
+        return
+    }
     defer shutdown(renderer, window, color_buffer)
 
     for is_running {
@@ -54,10 +58,17 @@ startup :: proc(title: cstring, $width, $height: i32, window_flags: sdl.WindowFl
     renderer := sdl.CreateRenderer(window, -1, render_flags)
     if renderer == nil {
         fmt.eprintln("Error initializing SDL renderer.")
+        sdl.DestroyWindow(window)
         return nil, nil, nil, false
     }
 
     color_buffer := make([]i32, width * height, allocator)
+    if color_buffer == nil {
+        fmt.eprintln("Error allocating color buffer.")
+        sdl.DestroyRenderer(renderer)
+        sdl.DestroyWindow(window)
+        return nil, nil, nil, false
+    }
 
     return window, renderer, color_buffer, true
 }
