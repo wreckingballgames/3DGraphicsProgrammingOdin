@@ -26,8 +26,8 @@ main :: proc() {
         mem.tracking_allocator_destroy(&track)
     }
 
-    window, renderer, is_running := startup(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_FLAGS, RENDER_FLAGS)
-    defer shutdown(renderer, window)
+    window, renderer, color_buffer, is_running := startup(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_FLAGS, RENDER_FLAGS)
+    defer shutdown(renderer, window, color_buffer)
 
     for is_running {
         is_running = process_input()
@@ -39,28 +39,31 @@ main :: proc() {
     }
 }
 
-startup :: proc(title: cstring, width, height: i32, window_flags: sdl.WindowFlags, render_flags: sdl.RendererFlags) -> (^sdl.Window, ^sdl.Renderer, bool) {
+startup :: proc(title: cstring, $width, $height: i32, window_flags: sdl.WindowFlags, render_flags: sdl.RendererFlags, allocator := context.allocator) -> (^sdl.Window, ^sdl.Renderer, []i32, bool) {
     if sdl.Init(sdl.INIT_EVERYTHING) != 0 {
         fmt.eprintln("Error initializing SDL.")
-        return nil, nil, false
+        return nil, nil, nil, false
     }
 
     window := sdl.CreateWindow(title, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, width, height, window_flags)
     if window == nil {
         fmt.eprintln("Error initializing SDL window.")
-        return nil, nil, false
+        return nil, nil, nil, false
     }
 
     renderer := sdl.CreateRenderer(window, -1, render_flags)
     if renderer == nil {
         fmt.eprintln("Error initializing SDL renderer.")
-        return nil, nil, false
+        return nil, nil, nil, false
     }
 
-    return window, renderer, true
+    color_buffer := make([]i32, width * height, allocator)
+
+    return window, renderer, color_buffer, true
 }
 
-shutdown :: proc(renderer: ^sdl.Renderer, window: ^sdl.Window) {
+shutdown :: proc(renderer: ^sdl.Renderer, window: ^sdl.Window, color_buffer: []i32) {
+    delete(color_buffer)
     sdl.DestroyRenderer(renderer)
     sdl.DestroyWindow(window)
     sdl.Quit()
