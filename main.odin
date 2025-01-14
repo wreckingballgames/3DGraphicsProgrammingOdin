@@ -30,7 +30,7 @@ main :: proc() {
     defer shutdown(renderer, window)
 
     for is_running {
-        process_input()
+        is_running = process_input()
         update()
         render()
 
@@ -65,8 +65,20 @@ shutdown :: proc(renderer: ^sdl.Renderer, window: ^sdl.Window) {
     sdl.Quit()
 }
 
-process_input :: proc() {
-    // TODO
+process_input :: proc() -> bool {
+    event: sdl.Event
+    sdl.PollEvent(&event)
+
+    #partial switch event.type {
+        case .QUIT:
+            return false
+        case .KEYDOWN:
+            if event.key.keysym.sym == .ESCAPE {
+                return false
+            }
+    }
+
+    return true
 }
 
 update :: proc() {
