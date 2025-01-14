@@ -32,8 +32,9 @@ main :: proc() {
     for is_running {
         is_running = process_input()
         update()
-        render()
+        render(renderer)
 
+        // Free all memory allocated this frame.
         mem.free_all(context.temp_allocator)
     }
 }
@@ -85,6 +86,8 @@ update :: proc() {
     // TODO
 }
 
-render :: proc() {
-    // TODO
+render :: proc(renderer: ^sdl.Renderer) {
+    sdl.SetRenderDrawColor(renderer, 128, 128, 128, 255)
+    sdl.RenderClear(renderer)
+    sdl.RenderPresent(renderer)
 }
