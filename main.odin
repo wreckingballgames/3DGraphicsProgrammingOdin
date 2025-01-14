@@ -28,6 +28,14 @@ main :: proc() {
 
     window, renderer, is_running := startup(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_FLAGS, RENDER_FLAGS)
     defer shutdown(renderer, window)
+
+    for is_running {
+        process_input()
+        update()
+        render()
+
+        mem.free_all(context.temp_allocator)
+    }
 }
 
 startup :: proc(title: cstring, width, height: i32, window_flags: sdl.WindowFlags, render_flags: sdl.RendererFlags) -> (^sdl.Window, ^sdl.Renderer, bool) {
@@ -55,4 +63,16 @@ shutdown :: proc(renderer: ^sdl.Renderer, window: ^sdl.Window) {
     sdl.DestroyRenderer(renderer)
     sdl.DestroyWindow(window)
     sdl.Quit()
+}
+
+process_input :: proc() {
+    // TODO
+}
+
+update :: proc() {
+    // TODO
+}
+
+render :: proc() {
+    // TODO
 }
