@@ -103,9 +103,11 @@ update :: proc() {
 render :: proc(renderer: ^sdl.Renderer, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
     sdl.SetRenderDrawColor(renderer, 128, 128, 128, 255)
     sdl.RenderClear(renderer)
+    clear_color_buffer(color_buffer, 0x00000000, window_width, window_height)
+
+    draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
 
     render_color_buffer(renderer, color_buffer, color_buffer_texture, window_width)
-    clear_color_buffer(color_buffer, 0xFFFFFF00, window_width, window_height)
 
     sdl.RenderPresent(renderer)
 }
@@ -122,4 +124,28 @@ clear_color_buffer :: proc(color_buffer: []u32, color: u32, width, height: int) 
 render_color_buffer :: proc(renderer: ^sdl.Renderer, color_buffer: []u32, texture: ^sdl.Texture, window_width: int) {
     sdl.UpdateTexture(texture, nil, raw_data(color_buffer), i32(window_width * size_of(u32)))
     sdl.RenderCopy(renderer, texture, nil, nil)
+}
+
+Grid_Style :: enum {
+    Solid,
+    Dotted,
+}
+
+draw_grid :: proc(color_buffer: []u32, width, height: int, color: u32, dx, dy: int, grid_style: Grid_Style) {
+    switch grid_style {
+        case .Solid:
+            for y := 0; y < height; y += 1 {
+                for x := 0; x < width; x += 1 {
+                    if x % dx == 0 || y % dy == 0 {
+                        color_buffer[width * y + x] = color
+                    }
+                }
+            }
+        case .Dotted:
+            for y := 0; y < height; y += dy {
+                for x := 0; x < width; x += dx {
+                    color_buffer[width * y + x] = color
+                }
+            }
+    }
 }
