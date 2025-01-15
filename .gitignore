@@ -1,2 +1,5 @@
 *.exe
 3DGraphicsProgrammingOdin
+/.idea/encodings.xml
+/.idea/indexLayout.xml
+/.idea/vcs.xml
