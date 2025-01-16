@@ -106,7 +106,7 @@ render :: proc(renderer: ^sdl.Renderer, color_buffer: []u32, color_buffer_textur
     clear_color_buffer(color_buffer, 0x00000000, window_width, window_height)
 
     draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
-    draw_rectangle(color_buffer, window_width, window_height, 30, 30, 100, 100, 0xFFFF0000)
+    draw_rectangle(color_buffer, window_width, 30, 30, 100, 100, 0xFFFF0000)
 
     render_color_buffer(renderer, color_buffer, color_buffer_texture, window_width)
 
@@ -151,10 +151,14 @@ draw_grid :: proc(color_buffer: []u32, width, height: int, color: u32, dx, dy: i
     }
 }
 
-draw_rectangle :: proc(color_buffer: []u32, window_width, window_height, x, y, width, height: int, color: u32) {
+draw_rectangle :: proc(color_buffer: []u32, window_width, x, y, width, height: int, color: u32) {
     for i := y; i < y + height; i += 1 {
         for j := x; j < x + width; j += 1 {
             color_buffer[window_width * i + j] = color
         }
     }
+}
+
+draw_pixel :: proc(color_buffer: []u32, window_width, x, y: int, color: u32) {
+    color_buffer[window_width * y + x] = color
 }
