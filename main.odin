@@ -10,6 +10,7 @@ WINDOW_HEIGHT :: 600
 WINDOW_FLAGS :: sdl.WINDOW_RESIZABLE
 RENDER_FLAGS :: sdl.RENDERER_ACCELERATED
 
+Vector2 :: distinct [2]f32
 Vector3 :: distinct [3]f32
 
 main :: proc() {
@@ -63,21 +64,6 @@ main :: proc() {
     }
     defer shutdown(renderer, window, color_buffer, color_buffer_texture)
 
-    // Create a 9x9x9 cube of points in 3D space.
-    NUM_POINTS_IN_CUBE :: 9 * 9 * 9
-    cube_points: [NUM_POINTS_IN_CUBE]Vector3
-
-    // Load cube points from -1 to 1.
-    point_count: int
-    for x: f32 = -1.0; x <= 1.0; x += 0.25 {
-        for y: f32 = -1.0; y <= 1.0; y += 0.25 {
-            for z: f32 = -1.0; z <= 1.0; z += 0.25 {
-                cube_points[point_count] = Vector3 {x, y, z}
-                point_count += 1
-            }
-        }
-    }
-
     is_running := true
     for is_running {
         is_running = process_input()
@@ -118,14 +104,41 @@ update :: proc() {
 }
 
 render :: proc(renderer: ^sdl.Renderer, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
-    sdl.SetRenderDrawColor(renderer, 128, 128, 128, 255)
-    sdl.RenderClear(renderer)
     clear_color_buffer(color_buffer, 0x00000000, window_width, window_height)
 
-    draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
-    draw_rectangle(color_buffer, window_width, 30, 30, 100, 100, 0xFFFF0000)
+    // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
+
+    // Create a 9x9x9 cube of points in 3D space.
+    NUM_POINTS_IN_CUBE :: 9 * 9 * 9
+    cube_points := make([]Vector3, NUM_POINTS_IN_CUBE, context.temp_allocator)
+
+    // Load cube points from -1 to 1.
+    point_count: int
+    for x: f32 = -1.0; x <= 1.0; x += 0.25 {
+        for y: f32 = -1.0; y <= 1.0; y += 0.25 {
+            for z: f32 = -1.0; z <= 1.0; z += 0.25 {
+                cube_points[point_count] = Vector3 {x, y, z}
+                point_count += 1
+            }
+        }
+    }
+
+    project_and_draw_cube(color_buffer, window_width, window_height, cube_points, NUM_POINTS_IN_CUBE, 128)
 
     render_color_buffer(renderer, color_buffer, color_buffer_texture, window_width)
 
     sdl.RenderPresent(renderer)
+}
+
+// Takes a 3D vector and returns a projected 2D point.
+project :: proc(vector: Vector3, fov_factor: f32) -> Vector2 {
+    return vector.xy * fov_factor
+}
+
+project_and_draw_cube :: proc(color_buffer: []u32, window_width, window_height: int, cube_points: []Vector3, $num_points_in_cube: int, fov_factor: f32) {
+    // Project and render all points in cube.
+    for i := 0; i < num_points_in_cube; i += 1 {
+        projected_point := project(cube_points[i], fov_factor)
+        draw_rectangle(color_buffer, window_width, window_height, int(projected_point.x) + window_width / 2, int(projected_point.y) + window_height / 2, 4, 4, 0xFFFFFF00)
+    }
 }

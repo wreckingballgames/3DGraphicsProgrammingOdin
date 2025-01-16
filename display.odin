@@ -40,14 +40,16 @@ draw_grid :: proc(color_buffer: []u32, width, height: int, color: u32, dx, dy: i
     }
 }
 
-draw_rectangle :: proc(color_buffer: []u32, window_width, x, y, width, height: int, color: u32) {
+draw_rectangle :: proc(color_buffer: []u32, window_width, window_height, x, y, width, height: int, color: u32) {
     for i := y; i < y + height; i += 1 {
         for j := x; j < x + width; j += 1 {
-            color_buffer[window_width * i + j] = color
+            draw_pixel(color_buffer, window_width, window_height, x, y, color)
         }
     }
 }
 
-draw_pixel :: proc(color_buffer: []u32, window_width, x, y: int, color: u32) {
-    color_buffer[window_width * y + x] = color
+draw_pixel :: proc(color_buffer: []u32, window_width, window_height, x, y: int, color: u32) {
+    if x > 0 && x < window_width && y > 0 && y < window_height {
+        color_buffer[window_width * y + x] = color
+    }
 }
