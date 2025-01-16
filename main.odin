@@ -10,6 +10,8 @@ WINDOW_HEIGHT :: 600
 WINDOW_FLAGS :: sdl.WINDOW_RESIZABLE
 RENDER_FLAGS :: sdl.RENDERER_ACCELERATED
 
+Vector3 :: distinct [3]f32
+
 main :: proc() {
     // Tracking allocator code adapted from Karl Zylinski's tutorials.
     track: mem.Tracking_Allocator
@@ -60,6 +62,21 @@ main :: proc() {
         return
     }
     defer shutdown(renderer, window, color_buffer, color_buffer_texture)
+
+    // Create a 9x9x9 cube of points in 3D space.
+    NUM_POINTS_IN_CUBE :: 9 * 9 * 9
+    cube_points: [NUM_POINTS_IN_CUBE]Vector3
+
+    // Load cube points from -1 to 1.
+    point_count: int
+    for x: f32 = -1.0; x <= 1.0; x += 0.25 {
+        for y: f32 = -1.0; y <= 1.0; y += 0.25 {
+            for z: f32 = -1.0; z <= 1.0; z += 0.25 {
+                cube_points[point_count] = Vector3 {x, y, z}
+                point_count += 1
+            }
+        }
+    }
 
     is_running := true
     for is_running {
