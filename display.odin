@@ -68,10 +68,14 @@ Projection_Style :: enum {
     Orthographic,
 }
 
-project_and_draw_cube :: proc(color_buffer: []u32, window_width, window_height: int, cube_points: []Vector3, $num_points_in_cube: int, fov_factor: f32) {
+project_and_draw_cube :: proc(color_buffer: []u32, window_width, window_height: int, cube: Cube, camera_position: Vector3, $num_points_in_cube: int, fov_factor: f32) {
     // Project and render all points in cube.
     for i := 0; i < num_points_in_cube; i += 1 {
-        projected_point := project(cube_points[i], fov_factor, .Perspective)
+        transformed_point := vector3_rotate_x(cube.points[i], cube.rotation.x)
+        transformed_point = vector3_rotate_y(transformed_point, cube.rotation.y)
+        transformed_point = vector3_rotate_z(transformed_point, cube.rotation.z)
+        transformed_point.z -= camera_position.z
+        projected_point := project(transformed_point, fov_factor, .Perspective)
         draw_rectangle(color_buffer,
             window_width,
             window_height,

@@ -11,6 +11,14 @@ WINDOW_HEIGHT :: 600
 WINDOW_FLAGS :: sdl.WINDOW_RESIZABLE
 RENDER_FLAGS :: sdl.RENDERER_ACCELERATED
 
+Cube :: struct {
+    points: []Vector3,
+    rotation: Vector3,
+}
+
+NUM_POINTS_IN_CUBE :: 9 * 9 * 9
+cube: Cube
+
 Vector2 :: distinct [2]f32
 Vector3 :: distinct [3]f32
 
@@ -67,6 +75,23 @@ main :: proc() {
 
     camera_position := Vector3 {0, 0, -5}
 
+    cube = Cube {
+        points = make([]Vector3, NUM_POINTS_IN_CUBE),
+        rotation = {0, 0, 0},
+    }
+    defer delete(cube.points)
+
+    // Load cube points from -1 to 1.
+    point_count: int
+    for x: f32 = -1.0; x <= 1.0; x += 0.25 {
+        for y: f32 = -1.0; y <= 1.0; y += 0.25 {
+            for z: f32 = -1.0; z <= 1.0; z += 0.25 {
+                cube.points[point_count] = Vector3 {x, y, z}
+                point_count += 1
+            }
+        }
+    }
+
     is_running := true
     for is_running {
         is_running = process_input()
@@ -103,7 +128,7 @@ process_input :: proc() -> bool {
 }
 
 update :: proc() {
-    // TODO
+    cube.rotation += 0.001
 }
 
 render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
@@ -111,22 +136,7 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
 
-    // Create a 9x9x9 cube of points in 3D space.
-    NUM_POINTS_IN_CUBE :: 9 * 9 * 9
-    cube_points := make([]Vector3, NUM_POINTS_IN_CUBE, context.temp_allocator)
-
-    // Load cube points from -1 to 1.
-    point_count: int
-    for x: f32 = -1.0; x <= 1.0; x += 0.25 {
-        for y: f32 = -1.0; y <= 1.0; y += 0.25 {
-            for z: f32 = -1.0; z <= 1.0; z += 0.25 {
-                cube_points[point_count] = Vector3 {x, y, z - camera_position.z}
-                point_count += 1
-            }
-        }
-    }
-
-    project_and_draw_cube(color_buffer, window_width, window_height, cube_points, NUM_POINTS_IN_CUBE, 640)
+    project_and_draw_cube(color_buffer, window_width, window_height, cube, camera_position, NUM_POINTS_IN_CUBE, 640)
 
     render_color_buffer(renderer, color_buffer, color_buffer_texture, window_width)
 
