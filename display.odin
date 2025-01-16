@@ -53,3 +53,33 @@ draw_pixel :: proc(color_buffer: []u32, window_width, window_height, x, y: int, 
         color_buffer[window_width * y + x] = color
     }
 }
+
+// Takes a 3D vector and returns a projected 2D point.
+project :: proc(vector: Vector3, fov_factor: f32, projection_style: Projection_Style) -> Vector2 {
+    if projection_style == .Perspective {
+        return vector.xy * fov_factor / vector.z
+    } else {
+        return vector.xy * fov_factor
+    }
+}
+
+Projection_Style :: enum {
+    Perspective,
+    Orthographic,
+}
+
+project_and_draw_cube :: proc(color_buffer: []u32, window_width, window_height: int, cube_points: []Vector3, $num_points_in_cube: int, fov_factor: f32) {
+    // Project and render all points in cube.
+    for i := 0; i < num_points_in_cube; i += 1 {
+        projected_point := project(cube_points[i], fov_factor, .Perspective)
+        draw_rectangle(color_buffer,
+            window_width,
+            window_height,
+            int(projected_point.x) + window_width / 2,
+            int(projected_point.y) + window_height / 2,
+            4,
+            4,
+            0xFFFFFF00
+        )
+    }
+}

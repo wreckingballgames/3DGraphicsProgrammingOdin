@@ -64,11 +64,13 @@ main :: proc() {
     }
     defer shutdown(renderer, window, color_buffer, color_buffer_texture)
 
+    camera_position := Vector3 {0, 0, -5}
+
     is_running := true
     for is_running {
         is_running = process_input()
         update()
-        render(renderer, color_buffer, color_buffer_texture, WINDOW_WIDTH, WINDOW_HEIGHT)
+        render(renderer, camera_position, color_buffer, color_buffer_texture, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         // Free all memory allocated this frame.
         mem.free_all(context.temp_allocator)
@@ -103,7 +105,7 @@ update :: proc() {
     // TODO
 }
 
-render :: proc(renderer: ^sdl.Renderer, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
+render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
     clear_color_buffer(color_buffer, 0x00000000, window_width, window_height)
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
@@ -117,28 +119,15 @@ render :: proc(renderer: ^sdl.Renderer, color_buffer: []u32, color_buffer_textur
     for x: f32 = -1.0; x <= 1.0; x += 0.25 {
         for y: f32 = -1.0; y <= 1.0; y += 0.25 {
             for z: f32 = -1.0; z <= 1.0; z += 0.25 {
-                cube_points[point_count] = Vector3 {x, y, z}
+                cube_points[point_count] = Vector3 {x, y, z - camera_position.z}
                 point_count += 1
             }
         }
     }
 
-    project_and_draw_cube(color_buffer, window_width, window_height, cube_points, NUM_POINTS_IN_CUBE, 128)
+    project_and_draw_cube(color_buffer, window_width, window_height, cube_points, NUM_POINTS_IN_CUBE, 640)
 
     render_color_buffer(renderer, color_buffer, color_buffer_texture, window_width)
 
     sdl.RenderPresent(renderer)
-}
-
-// Takes a 3D vector and returns a projected 2D point.
-project :: proc(vector: Vector3, fov_factor: f32) -> Vector2 {
-    return vector.xy * fov_factor
-}
-
-project_and_draw_cube :: proc(color_buffer: []u32, window_width, window_height: int, cube_points: []Vector3, $num_points_in_cube: int, fov_factor: f32) {
-    // Project and render all points in cube.
-    for i := 0; i < num_points_in_cube; i += 1 {
-        projected_point := project(cube_points[i], fov_factor)
-        draw_rectangle(color_buffer, window_width, window_height, int(projected_point.x) + window_width / 2, int(projected_point.y) + window_height / 2, 4, 4, 0xFFFFFF00)
-    }
 }
