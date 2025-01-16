@@ -10,6 +10,11 @@ WINDOW_HEIGHT :: 600
 WINDOW_FLAGS :: sdl.WINDOW_RESIZABLE
 RENDER_FLAGS :: sdl.RENDERER_ACCELERATED
 
+Grid_Style :: enum {
+    Solid,
+    Dotted,
+}
+
 main :: proc() {
     // Tracking allocator code adapted from Karl Zylinski's tutorials.
     track: mem.Tracking_Allocator
@@ -125,11 +130,6 @@ clear_color_buffer :: proc(color_buffer: []u32, color: u32, width, height: int) 
 render_color_buffer :: proc(renderer: ^sdl.Renderer, color_buffer: []u32, texture: ^sdl.Texture, window_width: int) {
     sdl.UpdateTexture(texture, nil, raw_data(color_buffer), i32(window_width * size_of(u32)))
     sdl.RenderCopy(renderer, texture, nil, nil)
-}
-
-Grid_Style :: enum {
-    Solid,
-    Dotted,
 }
 
 draw_grid :: proc(color_buffer: []u32, width, height: int, color: u32, dx, dy: int, grid_style: Grid_Style) {
