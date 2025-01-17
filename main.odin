@@ -9,6 +9,8 @@ WINDOW_WIDTH :: 800
 WINDOW_HEIGHT :: 600
 WINDOW_FLAGS :: sdl.WINDOW_RESIZABLE
 RENDER_FLAGS :: sdl.RENDERER_ACCELERATED
+TARGET_FPS :: 60
+TARGET_FRAME_TIME_IN_MILLISECONDS :: 1000 / TARGET_FPS
 
 Cube :: struct {
     points: []Vector3,
@@ -91,10 +93,13 @@ main :: proc() {
         }
     }
 
+    previous_frame_time: u32
+
     is_running := true
     for is_running {
+        previous_frame_time = sdl.GetTicks()
         is_running = process_input()
-        update()
+        update(previous_frame_time)
         render(renderer, camera_position, color_buffer, color_buffer_texture, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         // Free all memory allocated this frame.
@@ -126,8 +131,11 @@ process_input :: proc() -> bool {
     return true
 }
 
-update :: proc() {
-    cube.rotation += 0.001
+update :: proc(previous_frame_time: u32) {
+    // Enforce fixed timestep
+    for !sdl.TICKS_PASSED(sdl.GetTicks(), previous_frame_time + TARGET_FRAME_TIME_IN_MILLISECONDS) {}
+
+    cube.rotation += 0.01
 }
 
 render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
