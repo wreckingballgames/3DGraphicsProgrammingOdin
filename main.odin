@@ -133,7 +133,10 @@ process_input :: proc() -> bool {
 
 update :: proc(previous_frame_time: u32) {
     // Enforce fixed timestep
-    for !sdl.TICKS_PASSED(sdl.GetTicks(), previous_frame_time + TARGET_FRAME_TIME_IN_MILLISECONDS) {}
+    time_to_wait := TARGET_FRAME_TIME_IN_MILLISECONDS - (sdl.GetTicks() - previous_frame_time)
+    if time_to_wait > 0 && time_to_wait <= TARGET_FRAME_TIME_IN_MILLISECONDS {
+        sdl.Delay(time_to_wait)
+    }
 
     cube.rotation += 0.01
 }
