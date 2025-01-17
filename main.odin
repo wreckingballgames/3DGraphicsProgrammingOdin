@@ -2,7 +2,6 @@ package main
 
 import "core:fmt"
 import "core:mem"
-import "core:math"
 import sdl "vendor:sdl2"
 
 WINDOW_TITLE :: "3D Renderer"
@@ -141,28 +140,4 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
     render_color_buffer(renderer, color_buffer, color_buffer_texture, window_width)
 
     sdl.RenderPresent(renderer)
-}
-
-vector3_rotate_x :: proc(vector: Vector3, angle: f32) -> Vector3 {
-    return Vector3 {
-        vector.x,
-        vector.y * math.cos(angle) - vector.z * math.sin(angle),
-        vector.z * math.cos(angle) + vector.y * math.sin(angle),
-    }
-}
-
-vector3_rotate_y :: proc(vector: Vector3, angle: f32) -> Vector3 {
-    return Vector3 {
-        vector.x * math.cos(angle) - vector.z * math.sin(angle),
-        vector.y,
-        vector.z * math.cos(angle) + vector.x * math.sin(angle),
-    }
-}
-
-vector3_rotate_z :: proc(vector: Vector3, angle: f32) -> Vector3 {
-    return Vector3 {
-        vector.x * math.cos(angle) - vector.y * math.sin(angle),
-        vector.y * math.cos(angle) + vector.x * math.sin(angle),
-        vector.z,
-    }
 }
