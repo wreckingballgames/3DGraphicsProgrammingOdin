@@ -68,22 +68,40 @@ Projection_Style :: enum {
     Orthographic,
 }
 
-project_and_draw_cube :: proc(color_buffer: []u32, window_width, window_height: int, cube: Cube, camera_position: Vector3, $num_points_in_cube: int, fov_factor: f32) {
-    // Project and render all points in cube.
-    for i := 0; i < num_points_in_cube; i += 1 {
-        transformed_point := vector3_rotate_x(cube.points[i], cube.rotation.x)
-        transformed_point = vector3_rotate_y(transformed_point, cube.rotation.y)
-        transformed_point = vector3_rotate_z(transformed_point, cube.rotation.z)
-        transformed_point.z -= camera_position.z
-        projected_point := project(transformed_point, fov_factor, .Perspective)
-        draw_rectangle(color_buffer,
-            window_width,
-            window_height,
-            int(projected_point.x) + window_width / 2,
-            int(projected_point.y) + window_height / 2,
-            4,
-            4,
-            0xFFFFFF00
-        )
+// Transforms and projects all of a mesh's points before storing them in a global array of screen-space points to render.
+transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_height: int, mesh: Mesh, camera_position: Vector3, fov_factor: f32) {
+    // Transform and project all tris in mesh.
+    for i := 0; i < len(mesh.tris); i += 1 {
+        tri := mesh.tris[i]
+        projected_tri: Projected_Triangle
+
+        // Transform and project all vertices in tri.
+        for j := 0; j < len(tri); j += 1 {
+            transformed_vertex := vector3_rotate_x(tri[j], mesh.rotation.x)
+            transformed_vertex = vector3_rotate_y(transformed_vertex, mesh.rotation.y)
+            transformed_vertex = vector3_rotate_z(transformed_vertex, mesh.rotation.z)
+
+            // Translate the vertex away from the camera
+            transformed_vertex.z -= camera_position.z
+
+            projected_vertex := project(transformed_vertex, fov_factor, .Perspective)
+
+            // Scale and translate the projected tris to middle of the screen
+            projected_vertex.x += f32(window_width) / 2
+            projected_vertex.y += f32(window_height) / 2
+
+            projected_tri[j] = projected_vertex
+        }
+
+        // Save the projected tri to the global array of tris to render.
+        triangles_to_render[i] = projected_tri
+    }
+}
+
+render_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
+    for tri in triangles_to_render {
+        draw_rectangle(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), 3, 3, color)
+        draw_rectangle(color_buffer, window_width, window_height, int(tri[1].x), int(tri[1].y), 3, 3, color)
+        draw_rectangle(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), 3, 3, color)
     }
 }

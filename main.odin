@@ -12,13 +12,8 @@ RENDER_FLAGS :: sdl.RENDERER_ACCELERATED
 TARGET_FPS :: 60
 TARGET_FRAME_TIME_IN_MILLISECONDS :: 1000 / TARGET_FPS
 
-Cube :: struct {
-    points: []Vector3,
-    rotation: Vector3,
-}
-
-NUM_POINTS_IN_CUBE :: 9 * 9 * 9
-cube: Cube
+mesh: Mesh
+triangles_to_render: [NUM_TRIS_IN_MESH]Projected_Triangle
 
 Vector2 :: distinct [2]f32
 Vector3 :: distinct [3]f32
@@ -76,21 +71,38 @@ main :: proc() {
 
     camera_position := Vector3 {0, 0, -5}
 
-    cube = Cube {
-        points = make([]Vector3, NUM_POINTS_IN_CUBE),
+    mesh = Mesh {
+        vertices = {
+            {-1, -1, -1},
+            {-1, 1, -1},
+            {1, 1, -1},
+            {1, -1, -1},
+            {1, 1, 1},
+            {1, -1, 1},
+            {-1, 1, 1},
+            {-1, -1, 1},
+        },
         rotation = {0, 0, 0},
     }
-    defer delete(cube.points)
-
-    // Load cube points from -1 to 1.
-    point_count: int
-    for x: f32 = -1.0; x <= 1.0; x += 0.25 {
-        for y: f32 = -1.0; y <= 1.0; y += 0.25 {
-            for z: f32 = -1.0; z <= 1.0; z += 0.25 {
-                cube.points[point_count] = Vector3 {x, y, z}
-                point_count += 1
-            }
-        }
+    mesh.tris = {
+        // Front
+        {mesh.vertices[0], mesh.vertices[1], mesh.vertices[2]},
+        {mesh.vertices[0], mesh.vertices[2], mesh.vertices[3]},
+        // Right
+        {mesh.vertices[3], mesh.vertices[2], mesh.vertices[4]},
+        {mesh.vertices[3], mesh.vertices[4], mesh.vertices[5]},
+        // Back
+        {mesh.vertices[5], mesh.vertices[4], mesh.vertices[6]},
+        {mesh.vertices[5], mesh.vertices[6], mesh.vertices[7]},
+        // Left
+        {mesh.vertices[7], mesh.vertices[6], mesh.vertices[1]},
+        {mesh.vertices[7], mesh.vertices[1], mesh.vertices[0]},
+        // Top
+        {mesh.vertices[1], mesh.vertices[6], mesh.vertices[4]},
+        {mesh.vertices[1], mesh.vertices[4], mesh.vertices[2]},
+        // Bottom
+        {mesh.vertices[5], mesh.vertices[7], mesh.vertices[0]},
+        {mesh.vertices[5], mesh.vertices[0], mesh.vertices[3]},
     }
 
     previous_frame_time: u32
@@ -138,15 +150,15 @@ update :: proc(previous_frame_time: u32) {
         sdl.Delay(time_to_wait)
     }
 
-    cube.rotation += 0.01
+    mesh.rotation += 0.01
 }
 
 render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
     clear_color_buffer(color_buffer, 0x00000000, window_width, window_height)
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
-
-    project_and_draw_cube(color_buffer, window_width, window_height, cube, camera_position, NUM_POINTS_IN_CUBE, 640)
+    transform_and_project_mesh(color_buffer, window_width, window_height, mesh, camera_position, 640)
+    render_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
 
     render_color_buffer(renderer, color_buffer, color_buffer_texture, window_width)
 
