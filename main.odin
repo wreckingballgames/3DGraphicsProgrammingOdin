@@ -157,6 +157,7 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
     clear_color_buffer(color_buffer, 0x00000000, window_width, window_height)
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
+
     transform_and_project_mesh(color_buffer, window_width, window_height, mesh, camera_position, 640)
     render_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
 

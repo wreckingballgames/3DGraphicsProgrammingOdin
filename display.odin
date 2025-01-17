@@ -1,5 +1,6 @@
 package main
 
+import "core:math"
 import sdl "vendor:sdl2"
 
 Grid_Style :: enum {
@@ -54,6 +55,37 @@ draw_pixel :: proc(color_buffer: []u32, window_width, window_height, x, y: int, 
     }
 }
 
+draw_line :: proc(color_buffer: []u32, window_width, window_height, x0, y0, x1, y1: int, color: u32) {
+    delta_x := x1 - x0
+    delta_y := y1 - y0
+
+    longest_side_length := math.max(math.abs(delta_x), math.abs(delta_y))
+
+    // Calculate how much to increment each step
+    x_inc := f32(delta_x) / f32(longest_side_length)
+    y_inc := f32(delta_y) / f32(longest_side_length)
+
+    current_x := f32(x0)
+    current_y := f32(y0)
+    for i := 0; i <= longest_side_length; i += 1 {
+        draw_pixel(color_buffer,
+            window_width,
+            window_height,
+            int(math.round(current_x)),
+            int(math.round(current_y)),
+            color
+        )
+        current_x += x_inc
+        current_y += y_inc
+    }
+}
+
+draw_triangle :: proc(color_buffer: []u32, window_width, window_height, x0, y0, x1, y1, x2, y2: int, color: u32) {
+    draw_line(color_buffer, window_width, window_height, x0, y0, x1, y1, color)
+    draw_line(color_buffer, window_width, window_height, x1, y1, x2, y2, color)
+    draw_line(color_buffer, window_width, window_height, x2, y2, x0, y0, color)
+}
+
 // Takes a 3D vector and returns a projected 2D point.
 project :: proc(vector: Vector3, fov_factor: f32, projection_style: Projection_Style) -> Vector2 {
     if projection_style == .Perspective {
@@ -100,8 +132,23 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
 
 render_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
     for tri in triangles_to_render {
+        // Draw triangle vertices
         draw_rectangle(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), 3, 3, color)
         draw_rectangle(color_buffer, window_width, window_height, int(tri[1].x), int(tri[1].y), 3, 3, color)
         draw_rectangle(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), 3, 3, color)
+
+
+        // Draw triangle face
+        draw_triangle(color_buffer,
+            window_width,
+            window_height,
+            int(tri[0].x),
+            int(tri[0].y),
+            int(tri[1].x),
+            int(tri[1].y),
+            int(tri[2].x),
+            int(tri[2].y),
+            color
+        )
     }
 }
