@@ -12,7 +12,7 @@ RENDER_FLAGS :: sdl.RENDERER_ACCELERATED
 TARGET_FPS :: 60
 TARGET_FRAME_TIME_IN_MILLISECONDS :: 1000 / TARGET_FPS
 
-mesh: Mesh
+cube: Mesh
 triangles_to_render: [dynamic]Projected_Triangle
 
 Vector2 :: distinct [2]f32
@@ -71,7 +71,7 @@ main :: proc() {
 
     camera_position := Vector3 {0, 0, -5}
 
-    mesh = Mesh {
+    cube = Mesh {
         vertices = {
             {-1, -1, -1},
             {-1, 1, -1},
@@ -84,25 +84,25 @@ main :: proc() {
         },
         rotation = {0, 0, 0},
     }
-    mesh.tris = {
+    cube.tris = {
         // Front
-        {mesh.vertices[0], mesh.vertices[1], mesh.vertices[2]},
-        {mesh.vertices[0], mesh.vertices[2], mesh.vertices[3]},
+        {cube.vertices[0], cube.vertices[1], cube.vertices[2]},
+        {cube.vertices[0], cube.vertices[2], cube.vertices[3]},
         // Right
-        {mesh.vertices[3], mesh.vertices[2], mesh.vertices[4]},
-        {mesh.vertices[3], mesh.vertices[4], mesh.vertices[5]},
+        {cube.vertices[3], cube.vertices[2], cube.vertices[4]},
+        {cube.vertices[3], cube.vertices[4], cube.vertices[5]},
         // Back
-        {mesh.vertices[5], mesh.vertices[4], mesh.vertices[6]},
-        {mesh.vertices[5], mesh.vertices[6], mesh.vertices[7]},
+        {cube.vertices[5], cube.vertices[4], cube.vertices[6]},
+        {cube.vertices[5], cube.vertices[6], cube.vertices[7]},
         // Left
-        {mesh.vertices[7], mesh.vertices[6], mesh.vertices[1]},
-        {mesh.vertices[7], mesh.vertices[1], mesh.vertices[0]},
+        {cube.vertices[7], cube.vertices[6], cube.vertices[1]},
+        {cube.vertices[7], cube.vertices[1], cube.vertices[0]},
         // Top
-        {mesh.vertices[1], mesh.vertices[6], mesh.vertices[4]},
-        {mesh.vertices[1], mesh.vertices[4], mesh.vertices[2]},
+        {cube.vertices[1], cube.vertices[6], cube.vertices[4]},
+        {cube.vertices[1], cube.vertices[4], cube.vertices[2]},
         // Bottom
-        {mesh.vertices[5], mesh.vertices[7], mesh.vertices[0]},
-        {mesh.vertices[5], mesh.vertices[0], mesh.vertices[3]},
+        {cube.vertices[5], cube.vertices[7], cube.vertices[0]},
+        {cube.vertices[5], cube.vertices[0], cube.vertices[3]},
     }
 
     previous_frame_time: u32
@@ -151,7 +151,7 @@ update :: proc(previous_frame_time: u32) {
         sdl.Delay(time_to_wait)
     }
 
-    mesh.rotation += 0.01
+    cube.rotation += 0.01
 }
 
 render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
@@ -159,7 +159,7 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
 
-    transform_and_project_mesh(color_buffer, window_width, window_height, mesh, camera_position, 640)
+    transform_and_project_mesh(color_buffer, window_width, window_height, cube, camera_position, 640)
     render_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
 
     // Empty buffer of tris to render.

@@ -6,5 +6,5 @@ Mesh :: struct {
     rotation: Vector3,
 }
 
-NUM_VERTICES_IN_MESH :: 8
-NUM_TRIS_IN_MESH :: 6 * 2 // 6 cube faces with 2 tris each
+NUM_VERTICES_IN_CUBE :: 8
+NUM_TRIS_IN_CUBE :: 6 * 2 // 6 cube faces with 2 tris each
