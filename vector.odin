@@ -2,6 +2,9 @@ package main
 
 import "core:math"
 
+Vector2 :: distinct [2]f32
+Vector3 :: distinct [3]f32
+
 vector3_rotate_x :: proc(vector: Vector3, angle: f32) -> Vector3 {
     return Vector3 {
         vector.x,

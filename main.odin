@@ -15,9 +15,6 @@ TARGET_FRAME_TIME_IN_MILLISECONDS :: 1000 / TARGET_FPS
 car: ^Mesh
 triangles_to_render: [dynamic]Projected_Triangle
 
-Vector2 :: distinct [2]f32
-Vector3 :: distinct [3]f32
-
 main :: proc() {
     // Tracking allocator code adapted from Karl Zylinski's tutorials.
     track: mem.Tracking_Allocator
