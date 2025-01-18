@@ -15,8 +15,6 @@ NUM_VERTICES_IN_CUBE :: 8
 NUM_FACES_IN_CUBE :: 6 * 2 // 6 cube faces with 2 tris each
 
 load_obj_file_data :: proc(path: string, allocator := context.allocator) -> (^Mesh, os.Error) {
-    // TODO: Read .OBJ file and load information into Mesh object on heap
-
     data, err := os.read_entire_file_from_filename_or_err(path, context.temp_allocator)
     if err != nil {
         return nil, err
