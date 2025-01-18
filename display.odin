@@ -1,6 +1,7 @@
 package main
 
 import "core:math"
+import "core:math/linalg"
 import sdl "vendor:sdl2"
 
 Grid_Style :: enum {
@@ -106,22 +107,45 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
     for i := 0; i < len(mesh.faces); i += 1 {
         face := mesh.faces[i]
         tri: Triangle
-        projected_tri: Projected_Triangle
 
         tri[0] = mesh.vertices[face[0]]
         tri[1] = mesh.vertices[face[1]]
         tri[2] = mesh.vertices[face[2]]
 
-        // Transform and project all vertices in tri.
+        // Transform all vertices in tri.
+        transformed_tri: Triangle
         for j := 0; j < len(face); j += 1 {
             transformed_vertex := vector3_rotate_x(tri[j], mesh.rotation.x)
             transformed_vertex = vector3_rotate_y(transformed_vertex, mesh.rotation.y)
             transformed_vertex = vector3_rotate_z(transformed_vertex, mesh.rotation.z)
 
-            // Translate the vertex away from the camera
-            transformed_vertex.z -= camera_position.z
+            // Translate the vertex a base 5 units away from the camera, assuming camera position (0, 0, 0).
+            transformed_vertex.z -= 5
 
-            projected_vertex := project(transformed_vertex, fov_factor, .Perspective)
+            // Save transformed vertices.
+            transformed_tri[j] = transformed_vertex
+        }
+
+        // Perform back-face culling.
+        //   A
+        //  /\
+        // C--B
+        // Find the normal vector (cross product of vector B - A and vector C - A)
+        // Vector order would be reversed in a right-handed coordinate system.
+        normal := linalg.vector_cross3(transformed_tri.y - transformed_tri.x, transformed_tri.z - transformed_tri.x)
+        // Find the camera ray (vector from point A of our tri to camera position).
+        camera_ray := camera_position - transformed_tri.x
+        // Check alignment of camera ray to normal (dot product). If alignment is less than or equal to 0, do not render the tri.
+        if linalg.vector_dot(camera_ray, normal) < 0 {
+            continue
+        }
+
+        // Project all vertices in tri.
+        projected_tri: Projected_Triangle
+        for j := 0; j < len(face); j += 1 {
+            // Project all vertices in tri.
+            projected_vertex: Vector2
+            projected_vertex = project(transformed_tri[j], fov_factor, .Perspective)
 
             // Scale and translate the projected tris to middle of the screen
             projected_vertex.x += f32(window_width) / 2
@@ -129,6 +153,7 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
 
             projected_tri[j] = projected_vertex
         }
+
 
         // Save the projected tri to the global array of tris to render.
         append(&triangles_to_render, projected_tri)

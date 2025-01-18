@@ -13,6 +13,7 @@ TARGET_FPS :: 60
 TARGET_FRAME_TIME_IN_MILLISECONDS :: 1000 / TARGET_FPS
 
 car: ^Mesh
+cube: ^Mesh
 triangles_to_render: [dynamic]Projected_Triangle
 
 main :: proc() {
@@ -66,10 +67,13 @@ main :: proc() {
     }
     defer shutdown(renderer, window, color_buffer, color_buffer_texture)
 
-    camera_position := Vector3 {0, 0, -5}
+    camera_position := Vector3 {0, 0, 0}
 
     car, _ = load_obj_file_data("./assets/vehicle-racer-low.obj")
     defer delete_mesh(car)
+
+    cube, _ = load_obj_file_data("./assets/cube.obj")
+    defer delete_mesh(cube)
 
     previous_frame_time: u32
 
@@ -117,7 +121,8 @@ update :: proc(previous_frame_time: u32) {
         sdl.Delay(time_to_wait)
     }
 
-    car.rotation += 0.01
+    // cube.rotation += 0.01
+    car.rotation.y += 0.01
 }
 
 render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
@@ -125,7 +130,8 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
 
-    transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, 640)
+    // transform_and_project_mesh(color_buffer, window_width, window_height, cube^, camera_position, 900)
+    transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, 900)
     render_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
 
     // Empty buffer of tris to render.
