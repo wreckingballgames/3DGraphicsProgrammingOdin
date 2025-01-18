@@ -13,7 +13,7 @@ TARGET_FPS :: 60
 TARGET_FRAME_TIME_IN_MILLISECONDS :: 1000 / TARGET_FPS
 
 mesh: Mesh
-triangles_to_render: [NUM_TRIS_IN_MESH]Projected_Triangle
+triangles_to_render: [dynamic]Projected_Triangle
 
 Vector2 :: distinct [2]f32
 Vector3 :: distinct [3]f32
@@ -120,6 +120,7 @@ main :: proc() {
 }
 
 shutdown :: proc(renderer: ^sdl.Renderer, window: ^sdl.Window, color_buffer: []u32, color_buffer_texture: ^sdl.Texture) {
+    delete(triangles_to_render)
     delete(color_buffer)
     sdl.DestroyTexture(color_buffer_texture)
     sdl.DestroyRenderer(renderer)
@@ -161,7 +162,9 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
     transform_and_project_mesh(color_buffer, window_width, window_height, mesh, camera_position, 640)
     render_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
 
-    render_color_buffer(renderer, color_buffer, color_buffer_texture, window_width)
+    // Empty buffer of tris to render.
+    clear(&triangles_to_render)
 
+    render_color_buffer(renderer, color_buffer, color_buffer_texture, window_width)
     sdl.RenderPresent(renderer)
 }

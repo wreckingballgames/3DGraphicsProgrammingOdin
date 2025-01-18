@@ -126,7 +126,7 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
         }
 
         // Save the projected tri to the global array of tris to render.
-        triangles_to_render[i] = projected_tri
+        append(&triangles_to_render, projected_tri)
     }
 }
 
