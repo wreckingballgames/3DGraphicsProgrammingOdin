@@ -103,12 +103,17 @@ Projection_Style :: enum {
 // Transforms and projects all of a mesh's points before storing them in a global array of screen-space points to render.
 transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_height: int, mesh: Mesh, camera_position: Vector3, fov_factor: f32) {
     // Transform and project all tris in mesh.
-    for i := 0; i < len(mesh.tris); i += 1 {
-        tri := mesh.tris[i]
+    for i := 0; i < len(mesh.faces); i += 1 {
+        face := mesh.faces[i]
+        tri: Triangle
         projected_tri: Projected_Triangle
 
+        tri[0] = mesh.vertices[face[0]]
+        tri[1] = mesh.vertices[face[1]]
+        tri[2] = mesh.vertices[face[2]]
+
         // Transform and project all vertices in tri.
-        for j := 0; j < len(tri); j += 1 {
+        for j := 0; j < len(face); j += 1 {
             transformed_vertex := vector3_rotate_x(tri[j], mesh.rotation.x)
             transformed_vertex = vector3_rotate_y(transformed_vertex, mesh.rotation.y)
             transformed_vertex = vector3_rotate_z(transformed_vertex, mesh.rotation.z)

@@ -12,7 +12,7 @@ RENDER_FLAGS :: sdl.RENDERER_ACCELERATED
 TARGET_FPS :: 60
 TARGET_FRAME_TIME_IN_MILLISECONDS :: 1000 / TARGET_FPS
 
-cube: Mesh
+car: ^Mesh
 triangles_to_render: [dynamic]Projected_Triangle
 
 Vector2 :: distinct [2]f32
@@ -71,39 +71,8 @@ main :: proc() {
 
     camera_position := Vector3 {0, 0, -5}
 
-    cube = Mesh {
-        vertices = {
-            {-1, -1, -1},
-            {-1, 1, -1},
-            {1, 1, -1},
-            {1, -1, -1},
-            {1, 1, 1},
-            {1, -1, 1},
-            {-1, 1, 1},
-            {-1, -1, 1},
-        },
-        rotation = {0, 0, 0},
-    }
-    cube.tris = {
-        // Front
-        {cube.vertices[0], cube.vertices[1], cube.vertices[2]},
-        {cube.vertices[0], cube.vertices[2], cube.vertices[3]},
-        // Right
-        {cube.vertices[3], cube.vertices[2], cube.vertices[4]},
-        {cube.vertices[3], cube.vertices[4], cube.vertices[5]},
-        // Back
-        {cube.vertices[5], cube.vertices[4], cube.vertices[6]},
-        {cube.vertices[5], cube.vertices[6], cube.vertices[7]},
-        // Left
-        {cube.vertices[7], cube.vertices[6], cube.vertices[1]},
-        {cube.vertices[7], cube.vertices[1], cube.vertices[0]},
-        // Top
-        {cube.vertices[1], cube.vertices[6], cube.vertices[4]},
-        {cube.vertices[1], cube.vertices[4], cube.vertices[2]},
-        // Bottom
-        {cube.vertices[5], cube.vertices[7], cube.vertices[0]},
-        {cube.vertices[5], cube.vertices[0], cube.vertices[3]},
-    }
+    car, _ = load_obj_file_data("./assets/vehicle-racer-low.obj")
+    defer delete_mesh(car)
 
     previous_frame_time: u32
 
@@ -151,7 +120,7 @@ update :: proc(previous_frame_time: u32) {
         sdl.Delay(time_to_wait)
     }
 
-    cube.rotation += 0.01
+    car.rotation += 0.01
 }
 
 render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
@@ -159,7 +128,7 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
 
-    transform_and_project_mesh(color_buffer, window_width, window_height, cube, camera_position, 640)
+    transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, 640)
     render_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
 
     // Empty buffer of tris to render.
