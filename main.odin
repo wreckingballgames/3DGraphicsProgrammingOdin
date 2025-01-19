@@ -16,6 +16,9 @@ car: ^Mesh
 cube: ^Mesh
 triangles_to_render: [dynamic]Projected_Triangle
 
+draw_mode := Draw_Mode.Solid_And_Wireframe
+backface_culling_mode := Backface_Culling_Mode.Backface_Culling_Enabled
+
 main :: proc() {
     // Tracking allocator code adapted from Karl Zylinski's tutorials.
     track: mem.Tracking_Allocator
@@ -108,6 +111,18 @@ process_input :: proc() -> bool {
         case .KEYDOWN:
             if event.key.keysym.sym == .ESCAPE {
                 return false
+            } else if event.key.keysym.sym == .NUM1 {
+                draw_mode = .Wireframe_And_Vertices
+            } else if event.key.keysym.sym == .NUM2 {
+                draw_mode = .Wireframe_Only
+            } else if event.key.keysym.sym == .NUM3 {
+                draw_mode = .Solid_Only
+            } else if event.key.keysym.sym == .NUM4 {
+                draw_mode = .Solid_And_Wireframe
+            } else if event.key.keysym.sym == .C {
+                backface_culling_mode = .Backface_Culling_Enabled
+            } else if event.key.keysym.sym == .D {
+                backface_culling_mode = .Backface_Culling_Disabled
             }
     }
 
@@ -130,10 +145,20 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
 
-    transform_and_project_mesh(color_buffer, window_width, window_height, cube^, camera_position, 900)
-    // transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, 900)
-    render_filled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
-    render_unfilled_triangles(color_buffer, window_width, window_height, 0xFFFF0000)
+    transform_and_project_mesh(color_buffer, window_width, window_height, cube^, camera_position, 900, backface_culling_mode)
+    // transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, 900, backface_culling_mode)
+
+    if draw_mode == .Wireframe_Only {
+        render_unfilled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
+    } else if draw_mode == .Wireframe_And_Vertices {
+        render_unfilled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
+        render_triangle_vertices(color_buffer, window_width, window_height, 10, 10, 0xFFFF0000)
+    } else if draw_mode == .Solid_Only {
+        render_filled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
+    } else if draw_mode == .Solid_And_Wireframe {
+        render_filled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
+        render_unfilled_triangles(color_buffer, window_width, window_height, 0xFFFF0000)
+    }
 
     // Empty buffer of tris to render.
     clear(&triangles_to_render)

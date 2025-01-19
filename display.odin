@@ -9,6 +9,18 @@ Grid_Style :: enum {
     Dotted,
 }
 
+Draw_Mode :: enum {
+    Wireframe_Only,
+    Wireframe_And_Vertices,
+    Solid_Only,
+    Solid_And_Wireframe,
+}
+
+Backface_Culling_Mode :: enum {
+    Backface_Culling_Enabled,
+    Backface_Culling_Disabled,
+}
+
 clear_color_buffer :: proc(color_buffer: []u32, color: u32, width, height: int) {
     color_buffer := color_buffer
     for y := 0; y < height; y += 1 {
@@ -165,7 +177,7 @@ Projection_Style :: enum {
 }
 
 // Transforms and projects all of a mesh's points before storing them in a global array of screen-space points to render.
-transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_height: int, mesh: Mesh, camera_position: Vector3, fov_factor: f32) {
+transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_height: int, mesh: Mesh, camera_position: Vector3, fov_factor: f32, backface_culling_mode: Backface_Culling_Mode) {
     // Transform and project all tris in mesh.
     for i := 0; i < len(mesh.faces); i += 1 {
         face := mesh.faces[i]
@@ -189,18 +201,20 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
             transformed_tri[j] = transformed_vertex
         }
 
-        // Perform back-face culling.
-        //   A
-        //  /\
-        // C--B
-        // Find the normal vector (cross product of vector B - A and vector C - A)
-        // Vector order would be reversed in a right-handed coordinate system.
-        normal := linalg.vector_cross3(transformed_tri.y - transformed_tri.x, transformed_tri.z - transformed_tri.x)
-        // Find the camera ray (vector from point A of our tri to camera position).
-        camera_ray := camera_position - transformed_tri.x
-        // Check alignment of camera ray to normal (dot product). If alignment is less than or equal to 0, do not render the tri.
-        if linalg.vector_dot(camera_ray, normal) < 0 {
-            continue
+        if backface_culling_mode == .Backface_Culling_Enabled {
+            // Perform back-face culling.
+            //   A
+            //  /\
+            // C--B
+            // Find the normal vector (cross product of vector B - A and vector C - A)
+            // Vector order would be reversed in a right-handed coordinate system.
+            normal := linalg.vector_cross3(transformed_tri.y - transformed_tri.x, transformed_tri.z - transformed_tri.x)
+            // Find the camera ray (vector from point A of our tri to camera position).
+            camera_ray := camera_position - transformed_tri.x
+            // Check alignment of camera ray to normal (dot product). If alignment is less than or equal to 0, do not render the tri.
+            if linalg.vector_dot(camera_ray, normal) < 0 {
+                continue
+            }
         }
 
         // Project all vertices in tri.
@@ -223,15 +237,16 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
     }
 }
 
+render_triangle_vertices :: proc(color_buffer: []u32, window_width, window_height, rect_width, rect_height: int, color: u32) {
+    for tri in triangles_to_render {
+        draw_rectangle(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), rect_width, rect_height, color)
+        draw_rectangle(color_buffer, window_width, window_height, int(tri[1].x), int(tri[1].y), rect_width, rect_height, color)
+        draw_rectangle(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), rect_width, rect_height, color)
+    }
+}
+
 render_unfilled_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
     for tri in triangles_to_render {
-        // Draw triangle vertices
-        draw_rectangle(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), 3, 3, color)
-        draw_rectangle(color_buffer, window_width, window_height, int(tri[1].x), int(tri[1].y), 3, 3, color)
-        draw_rectangle(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), 3, 3, color)
-
-
-        // Draw triangle face
         draw_triangle(color_buffer,
             window_width,
             window_height,
@@ -243,13 +258,6 @@ render_unfilled_triangles :: proc(color_buffer: []u32, window_width, window_heig
 
 render_filled_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
     for tri in triangles_to_render {
-        // Draw triangle vertices
-        draw_rectangle(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), 3, 3, color)
-        draw_rectangle(color_buffer, window_width, window_height, int(tri[1].x), int(tri[1].y), 3, 3, color)
-        draw_rectangle(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), 3, 3, color)
-
-
-        // Draw triangle face
         draw_filled_triangle(color_buffer,
             window_width,
             window_height,
