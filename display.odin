@@ -106,11 +106,18 @@ draw_filled_triangle :: proc(color_buffer: []u32, window_width, window_height: i
         tri[1] = temp
     }
 
-    // Calculate the new vertex (Mx, My) using triangle similarity
-    midpoint_vertex := find_midpoint_of_projected_triangle(tri)
+    // If tri is flat-top or flat-bottom, less than half the work is required to fill it.
+    if tri[1].y == tri[2].y {
+        fill_flat_bottom_triangle(color_buffer, window_width, window_height, tri, color)
+    } else if tri[0].y == tri[1].y {
+        fill_flat_top_triangle(color_buffer, window_width, window_height, tri, color)
+    } else {
+        // Calculate the new vertex (Mx, My) using triangle similarity
+        midpoint_vertex := find_midpoint_of_projected_triangle(tri)
 
-    fill_flat_bottom_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri[0], tri[1], midpoint_vertex}, color)
-    fill_flat_top_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri[1], midpoint_vertex, tri[2]}, color)
+        fill_flat_bottom_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri[0], tri[1], midpoint_vertex}, color)
+        fill_flat_top_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri[1], midpoint_vertex, tri[2]}, color)
+    }
 }
 
 fill_flat_bottom_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle, color: u32) {
