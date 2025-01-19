@@ -81,10 +81,10 @@ draw_line :: proc(color_buffer: []u32, window_width, window_height, x0, y0, x1, 
     }
 }
 
-draw_triangle :: proc(color_buffer: []u32, window_width, window_height, x0, y0, x1, y1, x2, y2: int, color: u32) {
-    draw_line(color_buffer, window_width, window_height, x0, y0, x1, y1, color)
-    draw_line(color_buffer, window_width, window_height, x1, y1, x2, y2, color)
-    draw_line(color_buffer, window_width, window_height, x2, y2, x0, y0, color)
+draw_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle, color: u32) {
+    draw_line(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), int(tri[1].x), int(tri[1].y), color)
+    draw_line(color_buffer, window_width, window_height, int(tri[1].x), int(tri[1].y), int(tri[2].x), int(tri[2].y), color)
+    draw_line(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), int(tri[0].x), int(tri[0].y), color)
 }
 
 // Takes a 3D vector and returns a projected 2D point.
@@ -172,12 +172,7 @@ render_triangles :: proc(color_buffer: []u32, window_width, window_height: int, 
         draw_triangle(color_buffer,
             window_width,
             window_height,
-            int(tri[0].x),
-            int(tri[0].y),
-            int(tri[1].x),
-            int(tri[1].y),
-            int(tri[2].x),
-            int(tri[2].y),
+            tri,
             color
         )
     }
