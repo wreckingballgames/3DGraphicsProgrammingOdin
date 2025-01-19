@@ -87,6 +87,62 @@ draw_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri
     draw_line(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), int(tri[0].x), int(tri[0].y), color)
 }
 
+draw_filled_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle, color: u32) {
+    tri := tri
+    // Sort tri vertices by y-value ascending (y0 < y1 < y2)
+    if tri[0].y > tri[1].y {
+        temp := tri[0]
+        tri[0] = tri[1]
+        tri[1] = temp
+    }
+    if tri[1].y > tri[2].y {
+        temp := tri[1]
+        tri[1] = tri[2]
+        tri[2] = temp
+    }
+    if tri[0].y > tri[1].y {
+        temp := tri[0]
+        tri[0] = tri[1]
+        tri[1] = temp
+    }
+
+    // Calculate the new vertex (Mx, My) using triangle similarity
+    midpoint_vertex := find_midpoint_of_projected_triangle(tri)
+
+    fill_flat_bottom_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri[0], tri[1], midpoint_vertex}, color)
+    fill_flat_top_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri[1], midpoint_vertex, tri[2]}, color)
+}
+
+fill_flat_bottom_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle, color: u32) {
+    // Find the two (inverted) slopes (the two legs of the triangle)
+    inverted_slope1 := (tri[1].x - tri[0].x) / (tri[1].y - tri[0].y)
+    inverted_slope2 := (tri[2].x - tri[0].x) / (tri[2].y - tri[0].y)
+
+    // Loop all the scanlines from top to bottom.
+    x_start := tri[0].x
+    x_end := tri[0].x
+    for y := tri[0].y; y <= tri[2].y; y += 1 {
+        draw_line(color_buffer, window_width, window_height, int(x_start), int(y), int(x_end), int(y), color)
+        x_start += inverted_slope1
+        x_end += inverted_slope2
+    }
+}
+
+fill_flat_top_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle, color: u32) {
+    // Find the two (inverted) slopes (the two legs of the triangle)
+    inverted_slope1 := (tri[2].x - tri[0].x) / (tri[2].y - tri[0].y)
+    inverted_slope2 := (tri[2].x - tri[1].x) / (tri[2].y - tri[1].y)
+
+    // Loop all the scanlines from top to bottom.
+    x_start := tri[2].x
+    x_end := tri[2].x
+    for y := tri[2].y; y >= tri[0].y; y -= 1 {
+        draw_line(color_buffer, window_width, window_height, int(x_start), int(y), int(x_end), int(y), color)
+        x_start -= inverted_slope1
+        x_end -= inverted_slope2
+    }
+}
+
 // Takes a 3D vector and returns a projected 2D point.
 project :: proc(vector: Vector3, fov_factor: f32, projection_style: Projection_Style) -> Vector2 {
     if projection_style == .Perspective {
@@ -160,7 +216,7 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
     }
 }
 
-render_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
+render_unfilled_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
     for tri in triangles_to_render {
         // Draw triangle vertices
         draw_rectangle(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), 3, 3, color)
@@ -170,6 +226,24 @@ render_triangles :: proc(color_buffer: []u32, window_width, window_height: int, 
 
         // Draw triangle face
         draw_triangle(color_buffer,
+            window_width,
+            window_height,
+            tri,
+            color
+        )
+    }
+}
+
+render_filled_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
+    for tri in triangles_to_render {
+        // Draw triangle vertices
+        draw_rectangle(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), 3, 3, color)
+        draw_rectangle(color_buffer, window_width, window_height, int(tri[1].x), int(tri[1].y), 3, 3, color)
+        draw_rectangle(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), 3, 3, color)
+
+
+        // Draw triangle face
+        draw_filled_triangle(color_buffer,
             window_width,
             window_height,
             tri,

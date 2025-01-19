@@ -121,8 +121,8 @@ update :: proc(previous_frame_time: u32) {
         sdl.Delay(time_to_wait)
     }
 
-    // cube.rotation += 0.01
-    car.rotation.y += 0.01
+    cube.rotation += 0.01
+    // car.rotation.y += 0.01
 }
 
 render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
@@ -130,9 +130,10 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
 
-    // transform_and_project_mesh(color_buffer, window_width, window_height, cube^, camera_position, 900)
-    transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, 900)
-    render_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
+    transform_and_project_mesh(color_buffer, window_width, window_height, cube^, camera_position, 900)
+    // transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, 900)
+    render_filled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
+    render_unfilled_triangles(color_buffer, window_width, window_height, 0xFFFF0000)
 
     // Empty buffer of tris to render.
     clear(&triangles_to_render)
