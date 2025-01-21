@@ -43,11 +43,13 @@ load_obj_file_data :: proc(path: string, allocator := context.allocator) -> (^Me
         if strings.has_prefix(line, "f ") {
             split_string := strings.split(line, " ", context.temp_allocator)
             new_face: Face
-            new_face[0], _ = strconv.parse_int(strings.split(split_string[1], "/", context.temp_allocator)[0])
-            new_face[1], _ = strconv.parse_int(strings.split(split_string[2], "/", context.temp_allocator)[0])
-            new_face[2], _ = strconv.parse_int(strings.split(split_string[3], "/", context.temp_allocator)[0])
+            new_face.a, _ = strconv.parse_int(strings.split(split_string[1], "/", context.temp_allocator)[0])
+            new_face.b, _ = strconv.parse_int(strings.split(split_string[2], "/", context.temp_allocator)[0])
+            new_face.c, _ = strconv.parse_int(strings.split(split_string[3], "/", context.temp_allocator)[0])
             // Subtract 1 from each index to account for OBJ's 1-based counting before appending
-            new_face -= 1
+            new_face.a -= 1
+            new_face.b -= 1
+            new_face.c -= 1
             append(&faces, new_face)
         }
     }

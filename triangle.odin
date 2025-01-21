@@ -1,12 +1,22 @@
 package main
 
 Triangle :: distinct [3]Vector3
-Projected_Triangle :: distinct [3]Vector2
-Face :: distinct [3]int
+Projected_Triangle :: struct {
+    a: Vector2,
+    b: Vector2,
+    c: Vector2,
+    color: u32,
+}
+Face :: struct {
+    a: int,
+    b: int,
+    c: int,
+    color: u32,
+}
 
 // Assumes Projected_Triangle's vertices are sorted y-ascending
 find_midpoint_of_projected_triangle :: proc(tri: Projected_Triangle) -> Vector2 {
-    m_x := ((tri[2].x - tri[0].x) * (tri[1].y - tri[0].y) / (tri[2].y - tri[0].y)) + tri[0].x
-    m_y := tri[1].y
+    m_x := ((tri.c.x - tri.a.x) * (tri.b.y - tri.a.y) / (tri.c.y - tri.a.y)) + tri.a.x
+    m_y := tri.b.y
     return {m_x, m_y}
 }

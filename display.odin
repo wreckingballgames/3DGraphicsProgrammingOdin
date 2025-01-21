@@ -93,70 +93,70 @@ draw_line :: proc(color_buffer: []u32, window_width, window_height, x0, y0, x1, 
     }
 }
 
-draw_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle, color: u32) {
-    draw_line(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), int(tri[1].x), int(tri[1].y), color)
-    draw_line(color_buffer, window_width, window_height, int(tri[1].x), int(tri[1].y), int(tri[2].x), int(tri[2].y), color)
-    draw_line(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), int(tri[0].x), int(tri[0].y), color)
+draw_unfilled_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle) {
+    draw_line(color_buffer, window_width, window_height, int(tri.a.x), int(tri.a.y), int(tri.b.x), int(tri.b.y), tri.color)
+    draw_line(color_buffer, window_width, window_height, int(tri.b.x), int(tri.b.y), int(tri.c.x), int(tri.c.y), tri.color)
+    draw_line(color_buffer, window_width, window_height, int(tri.c.x), int(tri.c.y), int(tri.a.x), int(tri.a.y), tri.color)
 }
 
-draw_filled_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle, color: u32) {
+draw_filled_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle) {
     tri := tri
     // Sort tri vertices by y-value ascending (y0 < y1 < y2)
-    if tri[0].y > tri[1].y {
-        temp := tri[0]
-        tri[0] = tri[1]
-        tri[1] = temp
+    if tri.a.y > tri.b.y {
+        temp := tri.a
+        tri.a = tri.b
+        tri.b = temp
     }
-    if tri[1].y > tri[2].y {
-        temp := tri[1]
-        tri[1] = tri[2]
-        tri[2] = temp
+    if tri.b.y > tri.c.y {
+        temp := tri.b
+        tri.b = tri.c
+        tri.c = temp
     }
-    if tri[0].y > tri[1].y {
-        temp := tri[0]
-        tri[0] = tri[1]
-        tri[1] = temp
+    if tri.a.y > tri.b.y {
+        temp := tri.a
+        tri.a = tri.b
+        tri.b = temp
     }
 
     // If tri is flat-top or flat-bottom, less than half the work is required to fill it.
-    if tri[1].y == tri[2].y {
-        fill_flat_bottom_triangle(color_buffer, window_width, window_height, tri, color)
-    } else if tri[0].y == tri[1].y {
-        fill_flat_top_triangle(color_buffer, window_width, window_height, tri, color)
+    if tri.b.y == tri.c.y {
+        fill_flat_bottom_triangle(color_buffer, window_width, window_height, tri)
+    } else if tri.a.y == tri.b.y {
+        fill_flat_top_triangle(color_buffer, window_width, window_height, tri)
     } else {
         // Calculate the new vertex (Mx, My) using triangle similarity
         midpoint_vertex := find_midpoint_of_projected_triangle(tri)
 
-        fill_flat_bottom_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri[0], tri[1], midpoint_vertex}, color)
-        fill_flat_top_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri[1], midpoint_vertex, tri[2]}, color)
+        fill_flat_bottom_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri.a, tri.b, midpoint_vertex, tri.color})
+        fill_flat_top_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri.b, midpoint_vertex, tri.c, tri.color})
     }
 }
 
-fill_flat_bottom_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle, color: u32) {
+fill_flat_bottom_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle) {
     // Find the two (inverted) slopes (the two legs of the triangle)
-    inverted_slope1 := (tri[1].x - tri[0].x) / (tri[1].y - tri[0].y)
-    inverted_slope2 := (tri[2].x - tri[0].x) / (tri[2].y - tri[0].y)
+    inverted_slope1 := (tri.b.x - tri.a.x) / (tri.b.y - tri.a.y)
+    inverted_slope2 := (tri.c.x - tri.a.x) / (tri.c.y - tri.a.y)
 
     // Loop all the scanlines from top to bottom.
-    x_start := tri[0].x
-    x_end := tri[0].x
-    for y := tri[0].y; y <= tri[2].y; y += 1 {
-        draw_line(color_buffer, window_width, window_height, int(x_start), int(y), int(x_end), int(y), color)
+    x_start := tri.a.x
+    x_end := tri.a.x
+    for y := tri.a.y; y <= tri.c.y; y += 1 {
+        draw_line(color_buffer, window_width, window_height, int(x_start), int(y), int(x_end), int(y), tri.color)
         x_start += inverted_slope1
         x_end += inverted_slope2
     }
 }
 
-fill_flat_top_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle, color: u32) {
+fill_flat_top_triangle :: proc(color_buffer: []u32, window_width, window_height: int, tri: Projected_Triangle) {
     // Find the two (inverted) slopes (the two legs of the triangle)
-    inverted_slope1 := (tri[2].x - tri[0].x) / (tri[2].y - tri[0].y)
-    inverted_slope2 := (tri[2].x - tri[1].x) / (tri[2].y - tri[1].y)
+    inverted_slope1 := (tri.c.x - tri.a.x) / (tri.c.y - tri.a.y)
+    inverted_slope2 := (tri.c.x - tri.b.x) / (tri.c.y - tri.b.y)
 
     // Loop all the scanlines from top to bottom.
-    x_start := tri[2].x
-    x_end := tri[2].x
-    for y := tri[2].y; y >= tri[0].y; y -= 1 {
-        draw_line(color_buffer, window_width, window_height, int(x_start), int(y), int(x_end), int(y), color)
+    x_start := tri.c.x
+    x_end := tri.c.x
+    for y := tri.c.y; y >= tri.a.y; y -= 1 {
+        draw_line(color_buffer, window_width, window_height, int(x_start), int(y), int(x_end), int(y), tri.color)
         x_start -= inverted_slope1
         x_end -= inverted_slope2
     }
@@ -183,13 +183,13 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
         face := mesh.faces[i]
         tri: Triangle
 
-        tri[0] = mesh.vertices[face[0]]
-        tri[1] = mesh.vertices[face[1]]
-        tri[2] = mesh.vertices[face[2]]
+        tri[0] = mesh.vertices[face.a]
+        tri[1] = mesh.vertices[face.b]
+        tri[2] = mesh.vertices[face.c]
 
         // Transform all vertices in tri.
         transformed_tri: Triangle
-        for j := 0; j < len(face); j += 1 {
+        for j := 0; j < 3; j += 1 {
             transformed_vertex := vector3_rotate_x(tri[j], mesh.rotation.x)
             transformed_vertex = vector3_rotate_y(transformed_vertex, mesh.rotation.y)
             transformed_vertex = vector3_rotate_z(transformed_vertex, mesh.rotation.z)
@@ -219,7 +219,8 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
 
         // Project all vertices in tri.
         projected_tri: Projected_Triangle
-        for j := 0; j < len(face); j += 1 {
+        projected_tri.color = mesh.faces[i].color
+        for j := 0; j < 3; j += 1 {
             // Project all vertices in tri.
             projected_vertex: Vector2
             projected_vertex = project(transformed_tri[j], fov_factor, .Perspective)
@@ -228,7 +229,14 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
             projected_vertex.x += f32(window_width) / 2
             projected_vertex.y += f32(window_height) / 2
 
-            projected_tri[j] = projected_vertex
+            switch j {
+                case 0:
+                    projected_tri.a = projected_vertex
+                case 1:
+                    projected_tri.b = projected_vertex
+                case 2:
+                    projected_tri.c = projected_vertex
+            }
         }
 
 
@@ -239,19 +247,18 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
 
 render_triangle_vertices :: proc(color_buffer: []u32, window_width, window_height, rect_width, rect_height: int, color: u32) {
     for tri in triangles_to_render {
-        draw_rectangle(color_buffer, window_width, window_height, int(tri[0].x), int(tri[0].y), rect_width, rect_height, color)
-        draw_rectangle(color_buffer, window_width, window_height, int(tri[1].x), int(tri[1].y), rect_width, rect_height, color)
-        draw_rectangle(color_buffer, window_width, window_height, int(tri[2].x), int(tri[2].y), rect_width, rect_height, color)
+        draw_rectangle(color_buffer, window_width, window_height, int(tri.a.x), int(tri.a.y), rect_width, rect_height, color)
+        draw_rectangle(color_buffer, window_width, window_height, int(tri.b.x), int(tri.b.y), rect_width, rect_height, color)
+        draw_rectangle(color_buffer, window_width, window_height, int(tri.c.x), int(tri.c.y), rect_width, rect_height, color)
     }
 }
 
 render_unfilled_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
     for tri in triangles_to_render {
-        draw_triangle(color_buffer,
+        draw_unfilled_triangle(color_buffer,
             window_width,
             window_height,
             tri,
-            color
         )
     }
 }
@@ -262,7 +269,6 @@ render_filled_triangles :: proc(color_buffer: []u32, window_width, window_height
             window_width,
             window_height,
             tri,
-            color
         )
     }
 }

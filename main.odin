@@ -76,6 +76,18 @@ main :: proc() {
     defer delete_mesh(car)
 
     cube, _ = load_obj_file_data("./assets/cube.obj")
+    cube.faces[0].color = 0xFFFF0000
+    cube.faces[1].color = 0xFFFF0000
+    cube.faces[2].color = 0xFF00FF00
+    cube.faces[3].color = 0xFF00FF00
+    cube.faces[4].color = 0xFF0000FF
+    cube.faces[5].color = 0xFF0000FF
+    cube.faces[6].color = 0xFFFFFF00
+    cube.faces[7].color = 0xFFFFFF00
+    cube.faces[8].color = 0xFFFF00FF
+    cube.faces[9].color = 0xFFFF00FF
+    cube.faces[10].color = 0xFF00FFFF
+    cube.faces[11].color = 0xFF00FFFF
     defer delete_mesh(cube)
 
     previous_frame_time: u32
