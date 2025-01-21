@@ -6,6 +6,7 @@ Projected_Triangle :: struct {
     b: Vector2,
     c: Vector2,
     color: u32,
+    average_depth: f32,
 }
 Face :: struct {
     a: int,

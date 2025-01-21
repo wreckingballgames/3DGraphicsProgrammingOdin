@@ -161,15 +161,15 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: 
     // transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, 900, backface_culling_mode)
 
     if draw_mode == .Wireframe_Only {
-        render_unfilled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
+        render_unfilled_triangles(color_buffer, window_width, window_height)
     } else if draw_mode == .Wireframe_And_Vertices {
-        render_unfilled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
+        render_unfilled_triangles(color_buffer, window_width, window_height)
         render_triangle_vertices(color_buffer, window_width, window_height, 10, 10, 0xFFFF0000)
     } else if draw_mode == .Solid_Only {
-        render_filled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
+        render_filled_triangles(color_buffer, window_width, window_height)
     } else if draw_mode == .Solid_And_Wireframe {
-        render_filled_triangles(color_buffer, window_width, window_height, 0xFFFFFF00)
-        render_unfilled_triangles(color_buffer, window_width, window_height, 0xFFFF0000)
+        render_filled_triangles(color_buffer, window_width, window_height)
+        render_unfilled_triangles(color_buffer, window_width, window_height)
     }
 
     // Empty buffer of tris to render.

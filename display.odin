@@ -2,6 +2,7 @@ package main
 
 import "core:math"
 import "core:math/linalg"
+import "core:slice"
 import sdl "vendor:sdl2"
 
 Grid_Style :: enum {
@@ -127,8 +128,8 @@ draw_filled_triangle :: proc(color_buffer: []u32, window_width, window_height: i
         // Calculate the new vertex (Mx, My) using triangle similarity
         midpoint_vertex := find_midpoint_of_projected_triangle(tri)
 
-        fill_flat_bottom_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri.a, tri.b, midpoint_vertex, tri.color})
-        fill_flat_top_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri.b, midpoint_vertex, tri.c, tri.color})
+        fill_flat_bottom_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri.a, tri.b, midpoint_vertex, tri.color, tri.average_depth})
+        fill_flat_top_triangle(color_buffer, window_width, window_height, Projected_Triangle {tri.b, midpoint_vertex, tri.c, tri.color, tri.average_depth})
     }
 }
 
@@ -217,9 +218,13 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
             }
         }
 
+        // Calculate average depth for each face after transformation
+        average_depth: f32 = (transformed_tri[0].z + transformed_tri[1].z + transformed_tri[2].z) / 3.0
+
         // Project all vertices in tri.
         projected_tri: Projected_Triangle
         projected_tri.color = mesh.faces[i].color
+        projected_tri.average_depth = average_depth
         for j := 0; j < 3; j += 1 {
             // Project all vertices in tri.
             projected_vertex: Vector2
@@ -239,10 +244,12 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
             }
         }
 
-
         // Save the projected tri to the global array of tris to render.
         append(&triangles_to_render, projected_tri)
     }
+
+    // Sort triangles_to_render by average depth (ascending)
+    slice.sort_by(triangles_to_render[:], proc(a, b: Projected_Triangle) -> bool {return a.average_depth < b.average_depth})
 }
 
 render_triangle_vertices :: proc(color_buffer: []u32, window_width, window_height, rect_width, rect_height: int, color: u32) {
@@ -253,22 +260,22 @@ render_triangle_vertices :: proc(color_buffer: []u32, window_width, window_heigh
     }
 }
 
-render_unfilled_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
+render_unfilled_triangles :: proc(color_buffer: []u32, window_width, window_height: int) {
     for tri in triangles_to_render {
         draw_unfilled_triangle(color_buffer,
             window_width,
             window_height,
-            tri,
+            tri
         )
     }
 }
 
-render_filled_triangles :: proc(color_buffer: []u32, window_width, window_height: int, color: u32) {
+render_filled_triangles :: proc(color_buffer: []u32, window_width, window_height: int) {
     for tri in triangles_to_render {
         draw_filled_triangle(color_buffer,
             window_width,
             window_height,
-            tri,
+            tri
         )
     }
 }
