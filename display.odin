@@ -180,6 +180,18 @@ Projection_Style :: enum {
 
 // Transforms and projects all of a mesh's points before storing them in a global array of screen-space points to render.
 transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_height: int, mesh: Mesh, camera_position: linalg.Vector3f32, fov_factor: f32, backface_culling_mode: Backface_Culling_Mode) {
+    // Create a world matrix for the projected mesh. We calculate one matrix to transform all of the mesh's vertices!
+    world_matrix := linalg.identity_matrix(matrix[4, 4]f32)
+    // Matrix multiplication is not commutative (a * b != b * a) so the order matters.
+    // Scale first
+    world_matrix *= linalg.matrix4_scale_f32(mesh.scale)
+    // Rotate second
+    world_matrix *= linalg.matrix4_rotate_f32(mesh.rotation.x, linalg.Vector3f32 {-1.0, 0.0, 0.0})
+    world_matrix *= linalg.matrix4_rotate_f32(mesh.rotation.y, linalg.Vector3f32 {0.0, 1.0, 0.0})
+    world_matrix *= linalg.matrix4_rotate_f32(mesh.rotation.z, linalg.Vector3f32 {0.0, 0.0, -1.0})
+    // Translate last
+    world_matrix *= linalg.transpose(linalg.matrix4_translate_f32(mesh.translation))
+
     // Transform and project all tris in mesh.
     for i := 0; i < len(mesh.faces); i += 1 {
         face := mesh.faces[i]
@@ -192,16 +204,8 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
         // Transform all vertices in tri.
         transformed_tri: Triangle
         for j := 0; j < 3; j += 1 {
-            // The order of transformations is important!
-            transformed_vertex := linalg.Vector4f32 {tri[j].x, tri[j].y, tri[j].z, 1}
-            // Scale each vertex with a matrix
-            transformed_vertex *= linalg.matrix4_scale_f32(mesh.scale)
-            // Rotate each vertex with a matrix
-            transformed_vertex *= linalg.matrix4_rotate_f32(mesh.rotation.x, linalg.Vector3f32 {-1.0, 0.0, 0.0})
-            transformed_vertex *= linalg.matrix4_rotate_f32(mesh.rotation.y, linalg.Vector3f32 {0.0, 1.0, 0.0})
-            transformed_vertex *= linalg.matrix4_rotate_f32(mesh.rotation.z, linalg.Vector3f32 {0.0, 0.0, -1.0})
-            // Translate each vertex with a matrix
-            transformed_vertex *= linalg.transpose(linalg.matrix4_translate_f32(mesh.translation))
+            // Calculate the transformed vertex by simply multiplying the vertex (plus a w of 1) by the world matrix.
+            transformed_vertex := linalg.Vector4f32 {tri[j].x, tri[j].y, tri[j].z, 1} * world_matrix
 
             // Save transformed vertices.
             transformed_tri[j] = linalg.Vector3f32 {transformed_vertex.x, transformed_vertex.y, transformed_vertex.z}
