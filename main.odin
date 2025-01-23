@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:mem"
+import "core:math/linalg"
 import sdl "vendor:sdl2"
 
 WINDOW_TITLE :: "3D Renderer"
@@ -70,9 +71,10 @@ main :: proc() {
     }
     defer shutdown(renderer, window, color_buffer, color_buffer_texture)
 
-    camera_position := Vector3 {0, 0, 0}
+    camera_position := linalg.Vector3f32 {0, 0, 0}
 
     car, _ = load_obj_file_data("./assets/vehicle-racer-low.obj")
+    car.scale = linalg.Vector3f32 {1.0, 1.0, 1.0}
     defer delete_mesh(car)
 
     cube, _ = load_obj_file_data("./assets/cube.obj")
@@ -88,6 +90,7 @@ main :: proc() {
     cube.faces[9].color = 0xFFFF00FF
     cube.faces[10].color = 0xFF00FFFF
     cube.faces[11].color = 0xFF00FFFF
+    cube.scale = linalg.Vector3f32 {1.0, 1.0, 1.0}
     defer delete_mesh(cube)
 
     previous_frame_time: u32
@@ -148,11 +151,13 @@ update :: proc(previous_frame_time: u32) {
         sdl.Delay(time_to_wait)
     }
 
-    cube.rotation += 0.01
-    // car.rotation.y += 0.01
+    cube.scale += 0.001
+    cube.translation.x += 0.01
+    cube.translation.z = 5.0
+    cube.rotation.z += 0.01
 }
 
-render :: proc(renderer: ^sdl.Renderer, camera_position: Vector3, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
+render :: proc(renderer: ^sdl.Renderer, camera_position: linalg.Vector3f32, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
     clear_color_buffer(color_buffer, 0x00000000, window_width, window_height)
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)

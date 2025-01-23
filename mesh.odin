@@ -3,16 +3,17 @@ package main
 import "core:os"
 import "core:strings"
 import "core:strconv"
+import "core:math/linalg"
+import "core:fmt"
 
 // TODO: Use arena allocator to simplify mesh deallocation
 Mesh :: struct {
-    vertices: []Vector3,
+    vertices: []linalg.Vector3f32,
     faces: []Face,
-    rotation: Vector3,
+    rotation: linalg.Vector3f32,
+    scale: linalg.Vector3f32,
+    translation: linalg.Vector3f32,
 }
-
-NUM_VERTICES_IN_CUBE :: 8
-NUM_FACES_IN_CUBE :: 6 * 2 // 6 cube faces with 2 tris each
 
 load_obj_file_data :: proc(path: string, allocator := context.allocator) -> (^Mesh, os.Error) {
     data, err := os.read_entire_file_from_filename_or_err(path, context.temp_allocator)
@@ -20,7 +21,7 @@ load_obj_file_data :: proc(path: string, allocator := context.allocator) -> (^Me
         return nil, err
     }
 
-    vertices: [dynamic]Vector3
+    vertices: [dynamic]linalg.Vector3f32
 
     // Big ups to GingerBill for this article helping me figure out how to do this simply https://odin-lang.org/news/read-a-file-line-by-line/
     it := string(data)
@@ -28,7 +29,7 @@ load_obj_file_data :: proc(path: string, allocator := context.allocator) -> (^Me
     for line in strings.split_lines_iterator(&it) {
         if strings.has_prefix(line, "v ") {
             split_string := strings.split(line, " ", context.temp_allocator)
-            new_vertex: Vector3
+            new_vertex: linalg.Vector3f32
             new_vertex.x, _ = strconv.parse_f32(split_string[1])
             new_vertex.y, _ = strconv.parse_f32(split_string[2])
             new_vertex.z, _ = strconv.parse_f32(split_string[3])

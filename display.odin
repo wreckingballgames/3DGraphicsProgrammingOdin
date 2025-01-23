@@ -4,6 +4,7 @@ import "core:math"
 import "core:math/linalg"
 import "core:slice"
 import sdl "vendor:sdl2"
+import "core:fmt"
 
 Grid_Style :: enum {
     Solid,
@@ -164,7 +165,7 @@ fill_flat_top_triangle :: proc(color_buffer: []u32, window_width, window_height:
 }
 
 // Takes a 3D vector and returns a projected 2D point.
-project :: proc(vector: Vector3, fov_factor: f32, projection_style: Projection_Style) -> Vector2 {
+project :: proc(vector: linalg.Vector3f32, fov_factor: f32, projection_style: Projection_Style) -> linalg.Vector2f32 {
     if projection_style == .Perspective {
         return vector.xy * fov_factor / vector.z
     } else {
@@ -178,7 +179,7 @@ Projection_Style :: enum {
 }
 
 // Transforms and projects all of a mesh's points before storing them in a global array of screen-space points to render.
-transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_height: int, mesh: Mesh, camera_position: Vector3, fov_factor: f32, backface_culling_mode: Backface_Culling_Mode) {
+transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_height: int, mesh: Mesh, camera_position: linalg.Vector3f32, fov_factor: f32, backface_culling_mode: Backface_Culling_Mode) {
     // Transform and project all tris in mesh.
     for i := 0; i < len(mesh.faces); i += 1 {
         face := mesh.faces[i]
@@ -191,15 +192,19 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
         // Transform all vertices in tri.
         transformed_tri: Triangle
         for j := 0; j < 3; j += 1 {
-            transformed_vertex := vector3_rotate_x(tri[j], mesh.rotation.x)
-            transformed_vertex = vector3_rotate_y(transformed_vertex, mesh.rotation.y)
-            transformed_vertex = vector3_rotate_z(transformed_vertex, mesh.rotation.z)
-
-            // Translate the vertex a base 5 units away from the camera, assuming camera position (0, 0, 0).
-            transformed_vertex.z -= 5
+            // The order of transformations is important!
+            transformed_vertex := linalg.Vector4f32 {tri[j].x, tri[j].y, tri[j].z, 1}
+            // Scale each vertex with a matrix
+            transformed_vertex *= linalg.matrix4_scale_f32(mesh.scale)
+            // Rotate each vertex with a matrix
+            transformed_vertex *= linalg.matrix4_rotate_f32(mesh.rotation.x, linalg.Vector3f32 {-1.0, 0.0, 0.0})
+            transformed_vertex *= linalg.matrix4_rotate_f32(mesh.rotation.y, linalg.Vector3f32 {0.0, 1.0, 0.0})
+            transformed_vertex *= linalg.matrix4_rotate_f32(mesh.rotation.z, linalg.Vector3f32 {0.0, 0.0, -1.0})
+            // Translate each vertex with a matrix
+            transformed_vertex *= linalg.transpose(linalg.matrix4_translate_f32(mesh.translation))
 
             // Save transformed vertices.
-            transformed_tri[j] = transformed_vertex
+            transformed_tri[j] = linalg.Vector3f32 {transformed_vertex.x, transformed_vertex.y, transformed_vertex.z}
         }
 
         if backface_culling_mode == .Backface_Culling_Enabled {
@@ -227,7 +232,7 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
         projected_tri.average_depth = average_depth
         for j := 0; j < 3; j += 1 {
             // Project all vertices in tri.
-            projected_vertex: Vector2
+            projected_vertex: linalg.Vector2f32
             projected_vertex = project(transformed_tri[j], fov_factor, .Perspective)
 
             // Scale and translate the projected tris to middle of the screen
