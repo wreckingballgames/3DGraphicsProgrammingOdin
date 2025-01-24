@@ -164,22 +164,29 @@ fill_flat_top_triangle :: proc(color_buffer: []u32, window_width, window_height:
     }
 }
 
-// Takes a 3D vector and returns a projected 2D point.
-project :: proc(vector: linalg.Vector3f32, fov_factor: f32, projection_style: Projection_Style) -> linalg.Vector2f32 {
-    if projection_style == .Perspective {
-        return vector.xy * fov_factor / vector.z
-    } else {
-        return vector.xy * fov_factor
+// Takes a a projection matrix and a 4D vector and returns the projected vector.
+project :: proc(projection_matrix: matrix[4, 4]f32, v: linalg.Vector4f32) -> linalg.Vector4f32 {
+    result := projection_matrix * v
+    // Perform perspective divide with original Z (stored in W)
+    if result.w != 0.0 {
+        result.xyz /= result.w
     }
+    return result
 }
 
-Projection_Style :: enum {
-    Perspective,
-    Orthographic,
+create_perspective_projection_matrix :: proc(fov, aspect_ratio, znear, zfar: f32) -> matrix[4, 4]f32 {
+    m: matrix[4, 4]f32
+    m[0][0] = aspect_ratio * (1 / math.tan(fov / 2))
+    m[1][1] = 1 / math.tan(fov / 2)
+    m[2][2] = zfar / (zfar - znear)
+    m[2][3] = (-zfar * znear) / (zfar - znear)
+    // TODO: double-check your work. In the course m[3][2] was set to 1, however it seems to only work correctly if I do the following instead
+    m[3][3] = 1
+    return m
 }
 
 // Transforms and projects all of a mesh's points before storing them in a global array of screen-space points to render.
-transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_height: int, mesh: Mesh, camera_position: linalg.Vector3f32, fov_factor: f32, backface_culling_mode: Backface_Culling_Mode) {
+transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_height: int, mesh: Mesh, camera_position: linalg.Vector3f32, backface_culling_mode: Backface_Culling_Mode) {
     // Create a world matrix for the projected mesh. We calculate one matrix to transform all of the mesh's vertices!
     world_matrix := linalg.identity_matrix(matrix[4, 4]f32)
     // Matrix multiplication is not commutative (a * b != b * a) so the order matters.
@@ -208,7 +215,7 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
             transformed_vertex := linalg.Vector4f32 {tri[j].x, tri[j].y, tri[j].z, 1} * world_matrix
 
             // Save transformed vertices.
-            transformed_tri[j] = linalg.Vector3f32 {transformed_vertex.x, transformed_vertex.y, transformed_vertex.z}
+            transformed_tri[j] = transformed_vertex.xyz
         }
 
         if backface_culling_mode == .Backface_Culling_Enabled {
@@ -234,22 +241,27 @@ transform_and_project_mesh :: proc(color_buffer: []u32, window_width, window_hei
         projected_tri: Projected_Triangle
         projected_tri.color = mesh.faces[i].color
         projected_tri.average_depth = average_depth
+
+        half_window_width := f32(window_width) / 2.0
+        half_window_height := f32(window_height) / 2.0
         for j := 0; j < 3; j += 1 {
             // Project all vertices in tri.
-            projected_vertex: linalg.Vector2f32
-            projected_vertex = project(transformed_tri[j], fov_factor, .Perspective)
+            projected_vertex := project(perspective_projection_matrix, transformed_tri[j].xyzz)
 
-            // Scale and translate the projected tris to middle of the screen
-            projected_vertex.x += f32(window_width) / 2
-            projected_vertex.y += f32(window_height) / 2
+            // Scale into view
+            projected_vertex.x *= half_window_width
+            projected_vertex.y *= half_window_height
+            // Translate the projected tris to middle of the screen
+            projected_vertex.x += half_window_width
+            projected_vertex.y += half_window_height
 
             switch j {
                 case 0:
-                    projected_tri.a = projected_vertex
+                    projected_tri.a = projected_vertex.xy
                 case 1:
-                    projected_tri.b = projected_vertex
+                    projected_tri.b = projected_vertex.xy
                 case 2:
-                    projected_tri.c = projected_vertex
+                    projected_tri.c = projected_vertex.xy
             }
         }
 

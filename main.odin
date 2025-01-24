@@ -13,6 +13,12 @@ RENDER_FLAGS :: sdl.RENDERER_ACCELERATED
 TARGET_FPS :: 60
 TARGET_FRAME_TIME_IN_MILLISECONDS :: 1000 / TARGET_FPS
 
+FOV :: linalg.RAD_PER_DEG * 90.0
+ASPECT_RATIO :: f32(WINDOW_HEIGHT) / f32(WINDOW_WIDTH)
+ZNEAR :: 0.1
+ZFAR :: 100.0
+perspective_projection_matrix: matrix[4, 4]f32
+
 car: ^Mesh
 cube: ^Mesh
 triangles_to_render: [dynamic]Projected_Triangle
@@ -72,6 +78,8 @@ main :: proc() {
     defer shutdown(renderer, window, color_buffer, color_buffer_texture)
 
     camera_position := linalg.Vector3f32 {0, 0, 0}
+
+    perspective_projection_matrix = create_perspective_projection_matrix(FOV, ASPECT_RATIO, ZNEAR, ZFAR)
 
     car, _ = load_obj_file_data("./assets/vehicle-racer-low.obj")
     car.scale = linalg.Vector3f32 {1.0, 1.0, 1.0}
@@ -154,7 +162,7 @@ update :: proc(previous_frame_time: u32) {
     cube.scale += 0.001
     cube.translation.x += 0.01
     cube.translation.z = 5.0
-    cube.rotation.z += 0.01
+    cube.rotation.y += 0.01
 }
 
 render :: proc(renderer: ^sdl.Renderer, camera_position: linalg.Vector3f32, color_buffer: []u32, color_buffer_texture: ^sdl.Texture, window_width, window_height: int) {
@@ -162,8 +170,8 @@ render :: proc(renderer: ^sdl.Renderer, camera_position: linalg.Vector3f32, colo
 
     // draw_grid(color_buffer, window_width, window_height, 0xFFAAAAAA, 10, 10, .Solid)
 
-    transform_and_project_mesh(color_buffer, window_width, window_height, cube^, camera_position, 900, backface_culling_mode)
-    // transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, 900, backface_culling_mode)
+    transform_and_project_mesh(color_buffer, window_width, window_height, cube^, camera_position, backface_culling_mode)
+    // transform_and_project_mesh(color_buffer, window_width, window_height, car^, camera_position, backface_culling_mode)
 
     if draw_mode == .Wireframe_Only {
         render_unfilled_triangles(color_buffer, window_width, window_height)
